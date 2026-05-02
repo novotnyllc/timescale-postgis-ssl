@@ -6,6 +6,8 @@ When you deploy the Railway template, the service runs the prebuilt image from G
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/wZJzA-)
 
+Template image: [`assets/template-icon.png`](assets/template-icon.png)
+
 ### Why though?
 
 The [timescale/timescaledb-ha](https://hub.docker.com/r/timescale/timescaledb-ha) image in Docker Hub does not come with SSL baked in.
