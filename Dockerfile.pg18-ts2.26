@@ -13,8 +13,9 @@ RUN echo "postgres ALL=(root) NOPASSWD: /usr/bin/mkdir, /bin/chown, /usr/bin/ope
 COPY --chmod=755 init-ssl.sh /docker-entrypoint-initdb.d/init-ssl.sh
 COPY --chmod=755 wrapper.sh /usr/local/bin/wrapper.sh
 
-# Switch back to the postgres
-USER postgres
+# Run the wrapper as root so the Postgres entrypoint can prepare mounted volumes
+# before dropping privileges to postgres.
+USER root
 
 # Override the ENTRYPOINT with a wrapper script
 ENTRYPOINT ["wrapper.sh"]

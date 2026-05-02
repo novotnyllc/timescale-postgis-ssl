@@ -10,15 +10,22 @@ if [ -z "$PGDATA" ]; then
 fi
 
 # Set up needed variables
+EXPECTED_VOLUME_MOUNT_PATH="/home/postgres/pgdata"
 SSL_DIR="${PGDATA:-/var/lib/postgresql/data}/certs"
 INIT_SSL_SCRIPT="/docker-entrypoint-initdb.d/init-ssl.sh"
 POSTGRES_CONF_FILE="$PGDATA/postgresql.conf"
-PGDATA_PARENT="$(dirname "$PGDATA")"
 
-# Railway volumes can be mounted as root-owned directories.
-# Ensure the Timescale entrypoint can create and write to PGDATA.
-sudo mkdir -p "$PGDATA_PARENT" "$PGDATA"
-sudo chown postgres:postgres "$PGDATA_PARENT" "$PGDATA"
+if [ -n "$RAILWAY_ENVIRONMENT" ] && [ "$RAILWAY_VOLUME_MOUNT_PATH" != "$EXPECTED_VOLUME_MOUNT_PATH" ]; then
+  echo "Railway volume not mounted to the correct path, expected $EXPECTED_VOLUME_MOUNT_PATH but got $RAILWAY_VOLUME_MOUNT_PATH"
+  echo "Please update the volume mount path to the expected path and redeploy the service"
+  exit 1
+fi
+
+if [[ ! "$PGDATA" =~ ^"$EXPECTED_VOLUME_MOUNT_PATH" ]]; then
+  echo "PGDATA variable does not start with the expected volume mount path, expected to start with $EXPECTED_VOLUME_MOUNT_PATH"
+  echo "Please update the PGDATA variable to start with the expected volume mount path and redeploy the service"
+  exit 1
+fi
 
 # Regenerate if the certificate is not a x509v3 certificate
 if [ -f "$SSL_DIR/server.crt" ] && ! openssl x509 -noout -text -in "$SSL_DIR/server.crt" | grep -q "DNS:localhost"; then
