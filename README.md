@@ -47,7 +47,7 @@ The GitHub Actions workflow builds only the current PostgreSQL 18 image and publ
 The workflow runs:
 
 - manually via `workflow_dispatch`;
-- on pull requests that change the Dockerfile, init scripts, wrapper, or workflow;
+- on pull requests that change the Dockerfile, init scripts, wrapper, or workflow, using a local `linux/amd64` build check;
 - on pushes to `main` for those same files.
 
-Each build uses `pull: true`, so when a build is intentionally triggered it starts from the current upstream base image. Dependabot is enabled for Dockerfile and GitHub Actions updates. It opens PRs for upstream tag/action updates that need review before changing the database base image version.
+Each build uses `pull: true`, so when a build is intentionally triggered it starts from the current upstream base image. Pushes to `main` publish the multi-architecture `linux/amd64` and `linux/arm64` image. Dependabot is enabled for Dockerfile and GitHub Actions updates. It opens PRs for upstream tag/action updates that need review before changing the database base image version.
