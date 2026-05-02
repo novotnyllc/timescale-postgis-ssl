@@ -1,6 +1,6 @@
 # SSL-enabled PostgreSQL 18 + TimescaleDB + PostGIS
 
-This repository builds the Railway image for PostgreSQL 18 with TimescaleDB, PostGIS, and SSL enabled.
+This repository builds the Railway image for PostgreSQL 18 with TimescaleDB, PostGIS, and SSL enabled. The published image supports `linux/amd64` and `linux/arm64`.
 
 When you deploy the Railway template, the service runs the prebuilt image from GHCR rather than building this repository in Railway.
 
@@ -14,7 +14,12 @@ Since this could pose a problem for applications or services attempting to conne
 
 ### How does it work?
 
-The current Railway template uses `Dockerfile.pg18-ts2.26`, which starts from `timescale/timescaledb-ha:pg18.3-ts2.26.4-oss`. The `init-ssl.sh` script is copied into `docker-entrypoint-initdb.d/` and runs during database initialization.
+The current Railway template uses `Dockerfile.pg18-ts2.26`, which starts from `timescale/timescaledb-ha:pg18.3-ts2.26.4-oss`.
+
+The upstream TimescaleDB HA image already includes the PostGIS packages. This repository adds the missing Railway/SSL behavior and first-init extension setup:
+
+- `init-ssl.sh` creates PostgreSQL SSL certificates and enables SSL.
+- `init-extensions.sql` runs `CREATE EXTENSION IF NOT EXISTS timescaledb;` and `CREATE EXTENSION IF NOT EXISTS postgis;` for the initial database.
 
 The template mounts the Railway volume at `/home/postgres/pgdata` and sets:
 
@@ -35,6 +40,14 @@ For services running inside Railway, use `DATABASE_URL`; it points at the privat
 #### Cert expiry
 By default, the cert expiry is set to 820 days.  You can control this by configuring the `SSL_CERT_DAYS` environment variable as needed.
 
-### A note about running the images locally
+### Updates and security fixes
 
-The images built from this repo and workflow do not contain support for ARM.  Check out the Dockerfiles that build them and feel free to copy the logic to build your own image with the appropriate base containing support for ARM.
+The GitHub Actions workflow builds only the current PostgreSQL 18 image and publishes a multi-architecture GHCR manifest for `linux/amd64` and `linux/arm64`.
+
+The workflow runs:
+
+- manually via `workflow_dispatch`;
+- on pull requests that change the Dockerfile, init scripts, wrapper, or workflow;
+- on pushes to `main` for those same files.
+
+Each build uses `pull: true`, so when a build is intentionally triggered it starts from the current upstream base image. Dependabot is enabled for Dockerfile and GitHub Actions updates. It opens PRs for upstream tag/action updates that need review before changing the database base image version.
