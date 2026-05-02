@@ -4,7 +4,7 @@ This repository builds the Railway image for PostgreSQL 18 with TimescaleDB, Pos
 
 When you deploy the Railway template, the service runs the prebuilt image from GHCR rather than building this repository in Railway.
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/wZJzA-)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/postgresql-18-with-timescaledb-postgis-a)
 
 Template image: [`assets/template-icon.png`](assets/template-icon.png)
 
