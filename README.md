@@ -1,26 +1,36 @@
-# SSL-enabled Postgres DB image + TimescaleDB and PostGIS
+# SSL-enabled PostgreSQL 18 + TimescaleDB + PostGIS
 
-This repository contains the logic to build SSL-enabled Postgres images with TimescaleDB and PostGIS extensions already installed.
+This repository builds the Railway image for PostgreSQL 18 with TimescaleDB, PostGIS, and SSL enabled.
 
-When you deploy the TimescaleDB + PostGIS DB service from the Railway-published template, the image that is used is built from this repository.
+When you deploy the Railway template, the service runs the prebuilt image from GHCR rather than building this repository in Railway.
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/timescaledb-postgis)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/wZJzA-)
 
 ### Why though?
 
-The [timescale/timescaledb-ha](https://hub.docker.com/r/timescale/timescaledb-ha) image in Docker hub does not come with SSL baked in.
+The [timescale/timescaledb-ha](https://hub.docker.com/r/timescale/timescaledb-ha) image in Docker Hub does not come with SSL baked in.
 
 Since this could pose a problem for applications or services attempting to connect, we decided to roll our own image with SSL enabled.
 
 ### How does it work?
 
-The Dockerfiles contained in this repository start with the `timescale/timescaledb-ha` image as base.  Then the `init-ssl.sh` script is copied into the `docker-entrypoint-initdb.d/` directory to be executed upon initialization.
+The current Railway template uses `Dockerfile.pg18-ts2.26`, which starts from `timescale/timescaledb-ha:pg18.3-ts2.26.4-oss`. The `init-ssl.sh` script is copied into `docker-entrypoint-initdb.d/` and runs during database initialization.
+
+The template mounts the Railway volume at `/home/postgres/pgdata` and sets:
+
+```env
+PGDATA=/home/postgres/pgdata/data
+```
+
+That keeps the Railway volume mount path as the parent directory while using PostgreSQL's current data-directory layout under `data`.
 
 #### Wrapper script
 
-You will see in the Dockerfiles that the `ENTRYPOINT` is replaced with a `wrapper.sh` script.  The only logic the wrapper executes is to `unset` the `PGHOST` environment variable prior to executing the default entrypoint.  This logic is specific to Railway and allows us to use the `PGHOST` environment variable to enable the Database View.
+The PostgreSQL 18 Dockerfile replaces the image entrypoint with `wrapper.sh`. The wrapper prepares the Railway volume, validates the expected mount path, then unsets `PGHOST` and `PGPORT` before handing off to the upstream TimescaleDB/PostgreSQL entrypoint.
 
-If this logic conflicts with your use-case in any way, please feel free to spin up your own version of the image without the wrapper script.
+The `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `DATABASE_URL`, and `POSTGRES_*` variables are present so Railway recognizes the service as a database and shows the Database tab.
+
+For services running inside Railway, use `DATABASE_URL`; it points at the private Railway domain. `DATABASE_PUBLIC_URL` uses the TCP proxy and is intended for external clients.
 
 #### Cert expiry
 By default, the cert expiry is set to 820 days.  You can control this by configuring the `SSL_CERT_DAYS` environment variable as needed.
