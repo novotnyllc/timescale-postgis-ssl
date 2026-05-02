@@ -13,6 +13,12 @@ fi
 SSL_DIR="${PGDATA:-/var/lib/postgresql/data}/certs"
 INIT_SSL_SCRIPT="/docker-entrypoint-initdb.d/init-ssl.sh"
 POSTGRES_CONF_FILE="$PGDATA/postgresql.conf"
+PGDATA_PARENT="$(dirname "$PGDATA")"
+
+# Railway volumes can be mounted as root-owned directories.
+# Ensure the Timescale entrypoint can create and write to PGDATA.
+sudo mkdir -p "$PGDATA_PARENT" "$PGDATA"
+sudo chown postgres:postgres "$PGDATA_PARENT" "$PGDATA"
 
 # Regenerate if the certificate is not a x509v3 certificate
 if [ -f "$SSL_DIR/server.crt" ] && ! openssl x509 -noout -text -in "$SSL_DIR/server.crt" | grep -q "DNS:localhost"; then
